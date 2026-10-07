@@ -23,6 +23,7 @@ public:
         StatusIcon,   // Status icon in the bar
         QuickToggle,  // Quick toggle in utilities drawer
         DashboardTab, // New dashboard tab
+        ShellPanel,   // Independent panel window
     };
     Q_ENUM(Type)
 

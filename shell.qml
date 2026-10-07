@@ -26,6 +26,7 @@ ShellRoot {
 
     GSFLoader {}
     ServiceLoader {}
+    PluginLoader {}
 
     Background {}
     Drawers {}
