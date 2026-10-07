@@ -8,6 +8,7 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Caelestia.Blobs
 import Caelestia.Config
+import Caelestia.Plugins
 import qs.components
 import qs.components.containers
 import qs.services
@@ -18,6 +19,8 @@ StyledWindow {
 
     readonly property alias bar: bar
     readonly property alias interactionWrapper: interactions
+    readonly property real pluginDrawerWidth: Math.max(0, ...Array.from(borderPlugins.instances, panel => panel.visible ? panel.width : 0))
+    readonly property real pluginDrawerHeight: Math.max(0, ...Array.from(borderPlugins.instances, panel => panel.visible ? Math.max(0, panel.y + panel.height) : 0))
 
     readonly property ScreenState screenState: ShellState.forScreen(screen)
 
@@ -95,6 +98,13 @@ StyledWindow {
 
         Region {
             x: root.width - width
+            y: 0
+            width: root.pluginDrawerWidth + root.borderThickness
+            height: root.pluginDrawerHeight + root.borderThickness
+        }
+
+        Region {
+            x: root.width - width
             y: panels.osdWrapper.y + root.borderThickness
             width: panels.osdWrapper.width * (1 - panels.osd.offsetScale) + root.borderThickness
             height: panels.osd.height
@@ -147,6 +157,7 @@ StyledWindow {
     }
 
     Item {
+        id: borderSurface
         anchors.fill: parent
         opacity: root.surfaceColour.a
         layer.enabled: true
@@ -332,6 +343,52 @@ StyledWindow {
         screen: root.screen
         slot: "panels"
         component: panels
+    }
+
+    Variants {
+        id: borderPlugins
+        model: Plugins.entryPoints(EntryPointType.ShellPanel).filter(entry => entry.properties.borderAttached)
+
+        Item {
+            id: pluginPanel
+            required property pluginEntryPoint modelData
+            parent: panels
+
+            readonly property bool shouldBeActive: pluginLoader.status === EntryPointLoader.Ready && (pluginLoader.item?.panelVisible ?? false)
+            property real offsetScale: shouldBeActive ? 0 : 1
+            implicitWidth: pluginLoader.implicitWidth
+            implicitHeight: pluginLoader.implicitHeight
+            visible: offsetScale < 1
+            opacity: 1 - offsetScale
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: -(height + root.borderThickness + Tokens.rounding.extraLarge) * offsetScale
+            z: 20
+
+            Behavior on offsetScale { Anim {} }
+            transform: Matrix4x4 { matrix: pluginBg.deformMatrix }
+
+            EntryPointLoader {
+                id: pluginLoader
+                anchors.fill: parent
+                entryPoint: pluginPanel.modelData
+            }
+
+            HoverHandler { id: pluginHover }
+            Binding {
+                when: pluginLoader.item !== null && "panelHostHovered" in pluginLoader.item
+                target: pluginLoader.item
+                property: "panelHostHovered"
+                value: pluginHover.hovered
+            }
+
+            PanelBg {
+                id: pluginBg
+                parent: borderSurface
+                panel: pluginPanel
+                deformAmount: pluginPanel.modelData.properties.deformAmount ?? 0.025
+            }
+        }
     }
 
     component PanelBg: BlobRect {

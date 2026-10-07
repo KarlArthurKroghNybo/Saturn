@@ -25,7 +25,7 @@ Scope {
             required property ShellScreen modelData
 
             Variants {
-                model: Plugins.entryPoints(EntryPointType.ShellPanel)
+                model: Plugins.entryPoints(EntryPointType.ShellPanel).filter(entry => !entry.properties.borderAttached)
 
                 PluginPanel {
                     required property pluginEntryPoint modelData

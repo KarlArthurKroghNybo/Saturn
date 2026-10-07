@@ -21,6 +21,14 @@ Region {
     height: win.height - clampedThickness * 2 - win.dragMaskPadding * 2
     intersection: Intersection.Xor
 
+    Region {
+        x: root.win.width - width
+        y: 0
+        width: root.win.pluginDrawerWidth + root.borderThickness
+        height: root.win.pluginDrawerHeight + root.borderThickness
+        intersection: Intersection.Subtract
+    }
+
     R {
         panel: root.panels.dashboard
         y: 0
