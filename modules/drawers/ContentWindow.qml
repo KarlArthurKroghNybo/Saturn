@@ -19,6 +19,8 @@ StyledWindow {
 
     readonly property alias bar: bar
     readonly property alias interactionWrapper: interactions
+    readonly property bool pluginHoverActive: Array.from(borderPlugins.instances).some(panel => panel.cornerHovered || panel.pointerHovered)
+    readonly property int pluginHoverTriggerSize: borderPlugins.instances.length > 0 ? 32 : 0
     readonly property real pluginDrawerWidth: Math.max(0, ...Array.from(borderPlugins.instances, panel => panel.visible ? panel.width : 0))
     readonly property real pluginDrawerHeight: Math.max(0, ...Array.from(borderPlugins.instances, panel => panel.visible ? Math.max(0, panel.y + panel.height) : 0))
 
@@ -99,8 +101,8 @@ StyledWindow {
         Region {
             x: root.width - width
             y: 0
-            width: root.pluginDrawerWidth + root.borderThickness
-            height: root.pluginDrawerHeight + root.borderThickness
+            width: Math.max(root.pluginDrawerWidth + root.borderThickness, root.pluginHoverTriggerSize)
+            height: Math.max(root.pluginDrawerHeight + root.borderThickness, root.pluginHoverTriggerSize)
         }
 
         Region {
@@ -353,6 +355,12 @@ StyledWindow {
             id: pluginPanel
             required property pluginEntryPoint modelData
             parent: panels
+            readonly property bool cornerHovered: cornerHover.hovered && cornerHover.point.position.x >= root.width - 32 && cornerHover.point.position.y <= 32
+            readonly property bool pointerHovered: cornerHover.hovered
+                && cornerHover.point.position.x >= bar.implicitWidth + x
+                && cornerHover.point.position.x <= bar.implicitWidth + x + width
+                && cornerHover.point.position.y >= root.borderThickness + y
+                && cornerHover.point.position.y <= root.borderThickness + y + height
 
             readonly property bool shouldBeActive: pluginLoader.status === EntryPointLoader.Ready && (pluginLoader.item?.panelVisible ?? false)
             property real offsetScale: shouldBeActive ? 0 : 1
@@ -365,7 +373,9 @@ StyledWindow {
             anchors.topMargin: -(height + root.borderThickness + Tokens.rounding.extraLarge) * offsetScale
             z: 20
 
-            Behavior on offsetScale { Anim {} }
+            Behavior on offsetScale {
+                Anim { type: Anim.Emphasized; duration: 300 }
+            }
             transform: Matrix4x4 { matrix: pluginBg.deformMatrix }
 
             EntryPointLoader {
@@ -379,7 +389,13 @@ StyledWindow {
                 when: pluginLoader.item !== null && "panelHostHovered" in pluginLoader.item
                 target: pluginLoader.item
                 property: "panelHostHovered"
-                value: pluginHover.hovered
+                value: pluginPanel.pointerHovered
+            }
+            Binding {
+                when: pluginLoader.item !== null && "panelCornerHovered" in pluginLoader.item
+                target: pluginLoader.item
+                property: "panelCornerHovered"
+                value: pluginPanel.cornerHovered
             }
 
             PanelBg {
@@ -389,6 +405,11 @@ StyledWindow {
                 deformAmount: pluginPanel.modelData.properties.deformAmount ?? 0.025
             }
         }
+    }
+
+    HoverHandler {
+        id: cornerHover
+        parent: root.contentItem
     }
 
     component PanelBg: BlobRect {

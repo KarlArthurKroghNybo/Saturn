@@ -100,6 +100,12 @@ CustomMouseArea {
         const dragX = x - dragStart.x;
         const dragY = y - dragStart.y;
 
+        // The top-right plugin owns hover while the pointer is in its corner or panel.
+        if (QsWindow.window?.pluginHoverActive ?? false) {
+            screenState.sidebar = false;
+            return;
+        }
+
         if (fullscreen) {
             root.panels.osd.hovered = inRightPanel(panels.osdWrapper, x, y);
             return;

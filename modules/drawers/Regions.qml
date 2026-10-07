@@ -24,8 +24,8 @@ Region {
     Region {
         x: root.win.width - width
         y: 0
-        width: root.win.pluginDrawerWidth + root.borderThickness
-        height: root.win.pluginDrawerHeight + root.borderThickness
+        width: Math.max(root.win.pluginDrawerWidth + root.borderThickness, root.win.pluginHoverTriggerSize)
+        height: Math.max(root.win.pluginDrawerHeight + root.borderThickness, root.win.pluginHoverTriggerSize)
         intersection: Intersection.Subtract
     }
 
