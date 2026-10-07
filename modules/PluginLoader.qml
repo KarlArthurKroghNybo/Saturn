@@ -6,15 +6,13 @@ import Caelestia.Plugins
 import qs.services
 
 Scope {
-    Item {
-        Repeater {
-            model: Plugins.entryPoints(EntryPointType.Custom)
+    Variants {
+        model: Plugins.entryPoints(EntryPointType.Custom)
 
-            EntryPointLoader {
-                required property pluginEntryPoint modelData
+        EntryPointLoader {
+            required property pluginEntryPoint modelData
 
-                entryPoint: modelData
-            }
+            entryPoint: modelData
         }
     }
 
