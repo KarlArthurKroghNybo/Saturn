@@ -364,17 +364,28 @@ StyledWindow {
 
             readonly property bool shouldBeActive: pluginLoader.status === EntryPointLoader.Ready && (pluginLoader.item?.panelVisible ?? false)
             property real offsetScale: shouldBeActive ? 0 : 1
-            implicitWidth: pluginLoader.implicitWidth
-            implicitHeight: pluginLoader.implicitHeight
+            property real retainedWidth: 400
+            property real retainedHeight: 180
+            implicitWidth: shouldBeActive ? pluginLoader.implicitWidth : retainedWidth
+            implicitHeight: shouldBeActive ? pluginLoader.implicitHeight : retainedHeight
             visible: offsetScale < 1
-            opacity: 1 - offsetScale
+            opacity: Math.max(0, Math.min(1, 1 - offsetScale))
             anchors.top: parent.top
             anchors.right: parent.right
-            anchors.topMargin: -(height + root.borderThickness + Tokens.rounding.extraLarge) * offsetScale
+            anchors.rightMargin: (-implicitWidth - 5) * offsetScale
             z: 20
 
-            Behavior on offsetScale {
-                Anim { type: Anim.Emphasized; duration: 300 }
+            Behavior on offsetScale { Anim {} }
+            Behavior on implicitHeight {
+                enabled: pluginPanel.shouldBeActive && pluginPanel.offsetScale === 0
+                Anim { type: Anim.FastSpatial }
+            }
+            FrameAnimation {
+                running: pluginPanel.shouldBeActive
+                onTriggered: {
+                    pluginPanel.retainedWidth = pluginLoader.implicitWidth;
+                    pluginPanel.retainedHeight = pluginLoader.implicitHeight;
+                }
             }
             transform: Matrix4x4 { matrix: pluginBg.deformMatrix }
 
@@ -402,7 +413,8 @@ StyledWindow {
                 id: pluginBg
                 parent: borderSurface
                 panel: pluginPanel
-                deformAmount: pluginPanel.modelData.properties.deformAmount ?? 0.025
+                deformAmount: pluginPanel.modelData.properties.deformAmount ?? 0.1
+                visible: pluginPanel.visible
             }
         }
     }
